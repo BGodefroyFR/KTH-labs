@@ -1,0 +1,45 @@
+MONK datasets
+
+	1) MONK2 is a lot more difficult than the others. The tree should identify 15 different solutions.
+
+	
+Assignment 1: Entropy
+
+	monks_1_train
+		1.0000
+	monks_2_train
+		0.9571
+	monks_3_train
+		0.9998
+		
+Assignment 2: Gain
+	
+	MONK-1:
+		a1 : 0.0753
+		a2 : 0.0058
+		a3 : 0.0047
+		a4 : 0.0263
+		a5 : 0.2870
+		a6 : 0.0008
+		
+	MONK-2:	
+		a1 : 0.0038
+		a2 : 0.0025
+		a3 : 0.0011
+		a4 : 0.0157
+		a5 : 0.0173
+		a6 : 0.0062
+		
+	MONK-3:	
+		a1 : 0.0071
+		a2 : 0.2937
+		a3 : 0.0008
+		a4 : 0.0029
+		a5 : 0.2559
+		a6 : 0.0071
+		
+	Based on the results, we the should use the following attributes to split the data:
+		MONK-1: a5
+		MONK-2: a5
+		MONK-3: a2
+	

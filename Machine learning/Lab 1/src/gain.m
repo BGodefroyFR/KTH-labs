@@ -28,7 +28,7 @@ function [ entGain ] = gain(data)
 	attribute_prob
 	% Calculate gain
 	entGain = zeros(6,1);
-	former_entropy = ent(data);
+	former_entropy = ent(data)
 	for i = 1 : 6		
 		entGain(i,1) = former_entropy;
 		for j = 1 : 4

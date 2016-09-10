@@ -17,6 +17,10 @@ function [ entropy ] = ent(data)
     p0 = nbFalse / (nbTrue + nbFalse)
     p1 = nbTrue / (nbTrue + nbFalse)
 
-    entropy = - p0 * log2(p0) - p1 * log2(p1);
+    if(p0 > 0 && p0 < 1)
+        entropy = - p0 * log2(p0) - p1 * log2(p1);
+    else
+        entropy = 0;
+    end
 end
 
