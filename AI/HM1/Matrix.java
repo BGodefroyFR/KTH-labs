@@ -211,4 +211,20 @@ final public class Matrix {
     {
         return N;
     }
+
+    public double getBestObservation(int t)
+    {
+        double max = 0;
+        double bestObservation = -1;
+ 
+        for(int i = 0; i < N; i++)
+        {
+            if(data[t-1][i] >= max)
+            {
+                max = data[t-1][i];
+                bestObservation = i;
+            }
+        }
+        return bestObservation;
+    }
 }
