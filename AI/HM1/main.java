@@ -140,6 +140,27 @@ public class main {
     	Matrix M = new Matrix(valM);
 
     	Matrix Alpha = Util.compute_alpha(A, B, Pi, M);
+        Matrix Beta = Util.compute_beta(A, B, Pi, M);
+        double[][][] Digamma = Util.compute_digamma(A, B, Pi, M, Alpha, Beta);
+        Matrix Gamma = Util.compute_gamma(Digamma);
+
+        A = Util.recompute_A(Digamma, Gamma);
+        B = Util.recompute_B(M, Gamma);
+        Pi = Util.recompute_Pi(Gamma);
+
+        //A.show();
+        //System.out.println();
+        //B.show();
+        //System.out.println();
+        //Util.show_array(Digamma);
+        //Gamma.show();
+        //System.out.println();'
+        A.show();
+        System.out.println();
+        B.show();
+        System.out.println();
+        Pi.show();
+        
 
     	
     }
