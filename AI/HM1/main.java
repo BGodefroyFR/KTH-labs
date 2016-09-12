@@ -139,9 +139,10 @@ public class main {
     	valM.add(0, 1.0);
     	Matrix M = new Matrix(valM);
         double dist = 1;
+        double diff;
+        double last_obs_prob = 0;
 
         do {
-
 
             Matrix Alpha = Util.compute_alpha(A, B, Pi, M);
             Matrix Beta = Util.compute_beta(A, B, Pi, M);
@@ -152,16 +153,28 @@ public class main {
             Matrix new_B = Util.recompute_B(M, Gamma);
             Matrix new_Pi = Util.recompute_Pi(Gamma);
 
-            double diff1 = Util.compute_difference(A, new_A);
-            double diff2 = Util.compute_difference(B, new_B);
-            double diff3 = Util.compute_difference(Pi, new_Pi);
-            dist = (diff1 + diff2 + diff3)/3;
+            //double diff1 = Util.compute_difference(A, new_A);
+            //double diff2 = Util.compute_difference(B, new_B);
+            //double diff3 = Util.compute_difference(Pi, new_Pi);
+            //dist = (diff1 + diff2 + diff3)/3;
 
             A = new_A;
             B = new_B; 
             Pi = new_Pi;
 
-        } while (dist > 0.005);
+            double obs_prob = Util.compute_obs_prob(Alpha);
+            diff = obs_prob - last_obs_prob;
+            last_obs_prob = obs_prob;
+
+
+            //System.out.println("\n" + obs_prob + "\n");
+
+          /*  A.output();
+	        System.out.println();
+	        B.output();
+	        System.out.println();*/
+
+        } while (diff / 1e-300 > 1000);
 
         A.output2();
         B.output2();

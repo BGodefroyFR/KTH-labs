@@ -198,6 +198,7 @@ final public class Matrix {
             for (int j = 0; j < N; j++) 
                 System.out.print(data[i][j] + " ");
         }
+        System.out.println();
     }
 
 

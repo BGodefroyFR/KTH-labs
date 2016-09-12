@@ -45,7 +45,7 @@ public class Util
 
 				for (int j = 1; j <= A.getColumnNum(); j++)
 				{
-					temp1 += Beta.get(t+1, j) * B.get(j, (int)M.get(1, t) + 1) * A.get(i, j);
+					temp1 += Beta.get(t+1, j) * B.get(j, (int)M.get(1, t+1) + 1) * A.get(i, j);
 				}
 
 				Beta.set(t, i, temp1);
@@ -174,6 +174,18 @@ public class Util
 		return Pi;
 	}
 
+	public static double compute_obs_prob(Matrix Alpha)
+	{
+		double prob = 0;
+
+		for(int i = 1; i <= Alpha.getColumnNum(); i++)
+		{
+			prob += Alpha.get(Alpha.getRowNum(), i);
+		}
+
+		return prob;
+	}
+
 	public static double compute_difference(Matrix M1, Matrix M2)
 	{
 		double diff = 0;
@@ -182,6 +194,9 @@ public class Util
 		{
 			for (int j = 1; j <= M1.getColumnNum(); j++)
 			{
+				if(M1.get(i, j) < 1e-9 || M2.get(i, j) < 1e-9)
+					return 0;
+
 				diff += Math.abs(M1.get(i, j) - M2.get(i, j));
 			}
 		}
