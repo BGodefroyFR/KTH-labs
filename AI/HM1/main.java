@@ -10,7 +10,8 @@ public class main {
 
 		//HMM1();
 		//HMM2();
-		HMM3();
+		//HMM3();
+		HMM4();
 
 		sc.close();
     }
@@ -43,26 +44,7 @@ public class main {
     	valM.add(0, 1.0);
     	Matrix M = new Matrix(valM);
 
-    	Matrix Alpha = new Matrix(valM.get(1).intValue(), A.getColumnNum());
-
-    	for(int i = 1; i <= A.getColumnNum(); i++)
-    	{
-    		Alpha.set(1, i, Pi.get(1, i) * B.get(i, (int)M.get(1, 1) + 1));
-    	}
-
-    	for(int t = 2; t <= valM.get(1).intValue(); t++)
-    	{
-	    	for(int i = 1; i <= A.getColumnNum(); i++)
-	    	{
-	    		double tmp = 0;
-		    	for(int j = 1; j <= A.getColumnNum(); j++)
-		    	{
-		    		tmp += A.get(j, i) * Alpha.get(t-1, j);
-		    	}
-
-		    	Alpha.set(t, i, tmp * B.get(i, (int)M.get(1, t) + 1));
-		    }
-		}
+    	Matrix Alpha = Util.compute_alpha(A, B, Pi, M);
 
 		double res = 0;
 		for(int j = 1; j <= A.getColumnNum(); j++)
@@ -141,6 +123,25 @@ public class main {
     	}
 
     	System.out.println(res);
+    }
+
+    public static void HMM4() {
+
+    	List<Double> valA = readLine();
+    	List<Double> valB = readLine();
+    	List<Double> valPi = readLine();
+    	List<Double> valM = readLine();
+
+    	Matrix A = new Matrix(valA);
+    	Matrix B = new Matrix(valB);
+    	Matrix Pi = new Matrix(valPi);
+
+    	valM.add(0, 1.0);
+    	Matrix M = new Matrix(valM);
+
+    	Matrix Alpha = Util.compute_alpha(A, B, Pi, M);
+
+    	
     }
 
     public static List<Double> readLine()
