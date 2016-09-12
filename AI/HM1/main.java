@@ -138,15 +138,33 @@ public class main {
 
     	valM.add(0, 1.0);
     	Matrix M = new Matrix(valM);
+        double dist = 1;
 
-    	Matrix Alpha = Util.compute_alpha(A, B, Pi, M);
-        Matrix Beta = Util.compute_beta(A, B, Pi, M);
-        double[][][] Digamma = Util.compute_digamma(A, B, Pi, M, Alpha, Beta);
-        Matrix Gamma = Util.compute_gamma(Digamma);
+        do {
 
-        A = Util.recompute_A(Digamma, Gamma);
-        B = Util.recompute_B(M, Gamma);
-        Pi = Util.recompute_Pi(Gamma);
+
+            Matrix Alpha = Util.compute_alpha(A, B, Pi, M);
+            Matrix Beta = Util.compute_beta(A, B, Pi, M);
+            double[][][] Digamma = Util.compute_digamma(A, B, Pi, M, Alpha, Beta);
+            Matrix Gamma = Util.compute_gamma(Digamma);
+
+            Matrix new_A = Util.recompute_A(Digamma, Gamma);
+            Matrix new_B = Util.recompute_B(M, Gamma);
+            Matrix new_Pi = Util.recompute_Pi(Gamma);
+
+            double diff1 = Util.compute_difference(A, new_A);
+            double diff2 = Util.compute_difference(B, new_B);
+            double diff3 = Util.compute_difference(Pi, new_Pi);
+            dist = (diff1 + diff2 + diff3)/3;
+
+            A = new_A;
+            B = new_B; 
+            Pi = new_Pi;
+
+        } while (dist > 0.005);
+
+        A.output2();
+        B.output2();
 
         //A.show();
         //System.out.println();
@@ -155,11 +173,11 @@ public class main {
         //Util.show_array(Digamma);
         //Gamma.show();
         //System.out.println();'
-        A.show();
-        System.out.println();
-        B.show();
-        System.out.println();
-        Pi.show();
+        //A.show();
+        //System.out.println();
+        //B.show();
+        //System.out.println();
+        //Pi.show();
         
 
     	

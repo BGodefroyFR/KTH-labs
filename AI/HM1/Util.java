@@ -174,6 +174,21 @@ public class Util
 		return Pi;
 	}
 
+	public static double compute_difference(Matrix M1, Matrix M2)
+	{
+		double diff = 0;
+
+		for (int i = 1; i <= M1.getRowNum(); i++)
+		{
+			for (int j = 1; j <= M1.getColumnNum(); j++)
+			{
+				diff += Math.abs(M1.get(i, j) - M2.get(i, j));
+			}
+		}
+
+		return diff/(M1.getRowNum() * M1.getColumnNum());
+	}
+
 	public static void show_array(double[][][] array)
 	{
 		for (int t = 0; t < array.length; t++)

@@ -192,6 +192,15 @@ final public class Matrix {
         }
     }
 
+    public void output2() {
+        System.out.print(M + " " + N + " ");
+        for (int i = 0; i < M; i++) {
+            for (int j = 0; j < N; j++) 
+                System.out.print(data[i][j] + " ");
+        }
+    }
+
+
     public void set(int i, int j, double value)
     {
         data[i-1][j-1] = value;
