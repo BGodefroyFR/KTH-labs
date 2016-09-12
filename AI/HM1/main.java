@@ -11,7 +11,7 @@ public class main {
 		//HMM1();
 		//HMM2();
 		//HMM3();
-		HMM4();
+		HMM4_2();
 
 		sc.close();
     }
@@ -142,58 +142,34 @@ public class main {
         double diff;
         double last_obs_prob = 0;
 
+        Matrix new_A = A;
+        Matrix new_B = B;
+        Matrix new_Pi = Pi;
+
         do {
+
+        	A = new_A;
+            B = new_B; 
+            Pi = new_Pi;
 
             Matrix Alpha = Util.compute_alpha(A, B, Pi, M);
             Matrix Beta = Util.compute_beta(A, B, Pi, M);
             double[][][] Digamma = Util.compute_digamma(A, B, Pi, M, Alpha, Beta);
             Matrix Gamma = Util.compute_gamma(Digamma);
 
-            Matrix new_A = Util.recompute_A(Digamma, Gamma);
-            Matrix new_B = Util.recompute_B(M, Gamma);
-            Matrix new_Pi = Util.recompute_Pi(Gamma);
-
-            //double diff1 = Util.compute_difference(A, new_A);
-            //double diff2 = Util.compute_difference(B, new_B);
-            //double diff3 = Util.compute_difference(Pi, new_Pi);
-            //dist = (diff1 + diff2 + diff3)/3;
-
-            A = new_A;
-            B = new_B; 
-            Pi = new_Pi;
+            new_A = Util.recompute_A(Digamma, Gamma);
+            new_B = Util.recompute_B(M, Gamma);
+            new_Pi = Util.recompute_Pi(Gamma);
 
             double obs_prob = Util.compute_obs_prob(Alpha);
+            System.out.println(obs_prob);
             diff = obs_prob - last_obs_prob;
             last_obs_prob = obs_prob;
 
-
-            //System.out.println("\n" + obs_prob + "\n");
-
-          /*  A.output();
-	        System.out.println();
-	        B.output();
-	        System.out.println();*/
-
-        } while (diff / 1e-300 > 1000);
+        } while (diff > 0);
 
         A.output2();
         B.output2();
-
-        //A.show();
-        //System.out.println();
-        //B.show();
-        //System.out.println();
-        //Util.show_array(Digamma);
-        //Gamma.show();
-        //System.out.println();'
-        //A.show();
-        //System.out.println();
-        //B.show();
-        //System.out.println();
-        //Pi.show();
-        
-
-    	
     }
 
     public static List<Double> readLine()
@@ -224,4 +200,172 @@ public class main {
     	}
     	return res;
     }
+
+    public static void HMM4_2()
+	{
+		List<Double> valA = readLine();
+    	List<Double> valB = readLine();
+    	List<Double> valPi = readLine();
+    	List<Double> valM = readLine();
+
+    	double[][] A = Util.createArray2D(valA);
+    	double[][] B = Util.createArray2D(valB);
+    	double[] Pi = Util.createArray1D(valPi);
+
+    	valM.add(0, 1.0);
+    	double[] O = Util.createArray1D(valM);
+
+        int maxIters = 100;
+        int iters = 0;
+        double logProb = -1e300;
+        double oldLogProb;
+
+        double[][] newA = A;
+    	double[][] newB = B;
+
+        int N = A.length;
+        int M = B[0].length;
+        int T = O.length;
+
+        do {
+        	A = Util.getArrayCopy(newA);
+        	B = Util.getArrayCopy(newB);
+
+        	oldLogProb = logProb;
+
+            double[] c = new double[T];
+            double[][] Alpha = new double[T][N];
+            double[][] Beta = new double[T][N];
+            double[][][] DiGamma = new double[T][N][N];
+            double[][] Gamma = new double[T][N];
+
+            // compute Alpha_0(i)
+            c[0] = 0;
+            for(int i = 0; i <= N - 1; i++)
+            {
+            	Alpha[0][i] = Pi[i] * B[i][(int)O[0]];
+            	c[0] = c[0] + Alpha[0][i];
+            }
+
+            // scale the Alpha_0(i)
+            c[0] = 1.0 / c[0];
+            for(int i = 0; i <= N - 1; i++)
+            	Alpha[0][i] = c[0] * Alpha[0][i];
+
+            // compute Alpha_t(i)
+            for(int t = 1; t <= T - 1; t++)
+            {
+            	c[t] = 0;
+            	for(int i = 0; i <= N - 1; i++)
+            	{
+            		Alpha[t][i] = 0;
+            		for(int j = 0; j <= N - 1; j++)
+            		{
+            			Alpha[t][i] = Alpha[t][i] + Alpha[t-1][j] * A[j][i];
+            		}
+            		Alpha[t][i] = Alpha[t][i] * B[i][(int)O[t]];
+            		c[t] = c[t] + Alpha[t][i];
+            	}
+
+            	// scale Alpha_t(i)
+            	c[t] = 1.0 / c[t];
+            	for(int i = 0; i <= N-1; i++)
+            		Alpha[t][i] = c[t] * Alpha[t][i];
+            }
+
+            for(int i = 0; i <= N-1; i++)
+            	Beta[T-1][i] = c[T-1];
+
+            // The Beta-pass
+            for(int t = T-2; t >= 0; t--)
+            {
+            	for(int i = 0; i <= N-1; i++)
+            	{
+            		Beta[t][i] = 0;
+            		for(int j = 0; j <= N-1; j++)
+            			Beta[t][i] = Beta[t][i] + A[i][j] * B[j][(int)O[t+1]] * Beta[t+1][j];
+            	
+            		// scale
+            		Beta[t][i] = c[t] * Beta[t][i];
+            	}
+            }
+
+            // Compute Gamma and T-gamma
+            for(int t = 0; t <= T-2; t++)
+            {
+            	double denom = 0.0;
+            	for(int i = 0; i <= N-1; i++)
+            	{
+            		for(int j = 0; j <= N-1; j++)
+            		{
+            			denom = denom + Alpha[t][i] * A[i][j] * B[j][(int)O[t+1]] * Beta[t+1][j];
+            		}
+            	}
+            	for(int i = 0; i <= N-1; i++)
+            	{
+            		Gamma[t][i] = 0;
+            		for(int j = 0; j <= N-1; j++)
+            		{
+            			DiGamma[t][i][j] = (Alpha[t][i] * A[i][j] * B[j][(int)O[t+1]] * Beta[t+1][j]) / denom;
+            			Gamma[t][i] = Gamma[t][i] + DiGamma[t][i][j];
+            		}
+            	}
+            }
+
+            // special case
+            double denom = 0;
+            for(int i = 0; i <= N-1; i++)
+            	denom = denom + Alpha[T-1][i];
+            for(int i = 0; i <= N-1; i++)
+            	Gamma[T-1][i] = Alpha[T-1][i] / denom;
+
+            // Re-estimate A, B and Pi
+            for(int i = 0; i <= N-1; i++)
+            	Pi[i] = Gamma[0][i];
+
+            for(int i = 0; i <= N-1; i++)
+            {
+            	for(int j = 0; j <= N-1; j++)
+            	{
+            		double numer = 0.0;
+            		denom = 0.0;
+            		for(int t = 0; t <= T-2; t++)
+            		{
+            			numer = numer + DiGamma[t][i][j];
+            			denom = denom + Gamma[t][i];
+            		}
+            		newA[i][j] = numer / denom;
+            	}
+            }
+
+            for(int i = 0; i <= N-1; i++)
+            {
+            	for(int j = 0; j <= M-1; j++)
+            	{
+            		double numer = 0.0;
+            		denom = 0.0;
+
+            		for(int t = 0; t <= T-1; t++)
+            		{
+            			if(O[t] == j)
+            				numer = numer + Gamma[t][i];
+            			denom = denom + Gamma[t][i];
+            		}
+            		newB[i][j] = numer / denom;
+            	}
+            }
+
+            // Compute log
+            logProb = 0.0;
+            for(int i = 0; i <= T-1; i++)
+            	logProb = logProb + Math.log(c[i]);
+            logProb = (-1) * logProb;
+
+            iters ++;
+
+        } while(iters < maxIters && logProb > oldLogProb);
+
+        Util.output_array(A);
+        Util.output_array(B);
+	}
 }
