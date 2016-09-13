@@ -235,22 +235,32 @@ public class Util
 		return (-1) * logProb;
 	}
 
-	public static double compute_difference(Matrix M1, Matrix M2)
+	public static double compute_HMM_distance2D(double[][] M1, double[][] M2)
 	{
-		double diff = 0;
+		double dist = 0;
 
-		for (int i = 1; i <= M1.getRowNum(); i++)
+		for (int i = 0; i < M1.length; i++)
 		{
-			for (int j = 1; j <= M1.getColumnNum(); j++)
+			double tmp = 0;
+			for (int j = 0; j < M2.length; j++)
 			{
-				if(M1.get(i, j) < 1e-9 || M2.get(i, j) < 1e-9)
-					return 0;
-
-				diff += Math.abs(M1.get(i, j) - M2.get(i, j));
+				tmp += Math.pow(M1[i][j] - M2[i][j], 2);
 			}
+			dist += tmp;
 		}
 
-		return diff/(M1.getRowNum() * M1.getColumnNum());
+		return Math.sqrt(dist);
+	}
+
+	public static double compute_HMM_distance1D(double[] M1, double[] M2)
+	{
+		double dist = 0;
+		for (int j = 0; j < M2.length; j++)
+		{
+			dist += Math.pow(M1[j] - M2[j], 2);
+		}
+
+		return Math.sqrt(dist);
 	}
 
 	public static void show_array(double[][][] array)
@@ -305,6 +315,17 @@ public class Util
 			{
 				System.out.print(array[i][j] + " ");
 			}
+		}
+		System.out.println();
+	}
+
+	public static void output_array1D(double[] array)
+	{
+		System.out.print(1 + " " + array.length + " ");
+
+		for (int j = 0; j < array.length; j++)
+		{
+			System.out.print(array[j] + " ");
 		}
 		System.out.println();
 	}

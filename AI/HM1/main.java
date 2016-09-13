@@ -215,7 +215,7 @@ public class main {
     	valM.add(0, 1.0);
     	double[] O = Util.createArray1D(valM);
 
-        int maxIters = 100;
+        int maxIters = 100000;
         int iters = 0;
         double logProb = -1e300;
         double oldLogProb;
@@ -365,7 +365,23 @@ public class main {
 
         } while(iters < maxIters && logProb > oldLogProb);
 
+        System.out.println("iterations: " + iters);
+
+        List<Double> val_solA = readLine();
+    	List<Double> val_solB = readLine();
+    	List<Double> val_solPi = readLine();
+
+    	double[][] sol_A = Util.createArray2D(val_solA);
+    	double[][] sol_B = Util.createArray2D(val_solB);
+    	double[] sol_Pi = Util.createArray1D(val_solPi);
+
+        System.out.println("distance A: " + Util.compute_HMM_distance2D(A, sol_A));
+        System.out.println("distance B: " + Util.compute_HMM_distance2D(B, sol_B));
+        System.out.println("distance Pi: " + Util.compute_HMM_distance1D(Pi, sol_Pi));
+        System.out.println();
+
         Util.output_array(A);
         Util.output_array(B);
+        Util.output_array1D(Pi);
 	}
 }
