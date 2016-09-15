@@ -1,0 +1,20 @@
+<package>
+ <name>lab1_launch</name>
+  <version>0.1.0</version>
+  <description>
+    Launch files for the lab1.
+  </description>
+  <license>BSD</license>
+
+  <author email="godefroy@kth.se">Bruno Godefroy</author>
+  <maintainer email="godefroy@kth.se">Bruno Godefroy</maintainer>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+
+  <run_depend>ras_lab1_cartesian_controllers</run_depend>
+  <run_depend>ras_lab1_controllers</run_depend>
+  <run_depend>ras_lab1_motor_controller</run_depend>
+  <run_depend>ras_lab1_open_loop_control</run_depend>
+
+</package>
