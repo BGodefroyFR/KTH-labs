@@ -1,0 +1,1 @@
+java Main server load ParadiseEmissions.in
