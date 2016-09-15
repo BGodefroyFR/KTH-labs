@@ -43,6 +43,15 @@ final public class Matrix {
                     this.data[i][j] = data[i][j];
     }
 
+    // create matrix based on 1d array
+    public Matrix(double[] data) {
+        M = 1;
+        N = data.length;
+        this.data = new double[M][N];
+        for (int j = 0; j < N; j++)
+                    this.data[0][j] = data[j];
+    }
+
     // copy constructor
     public Matrix(Matrix A) { this(A.data); }
 
@@ -178,8 +187,8 @@ final public class Matrix {
     public void show() {
         for (int i = 0; i < M; i++) {
             for (int j = 0; j < N; j++) 
-                System.out.print(data[i][j] + " ");
-            System.out.println();
+                System.err.print(data[i][j] + " ");
+            System.err.println();
         }
     }
 
@@ -236,5 +245,25 @@ final public class Matrix {
             }
         }
         return bestObservation;
+    }
+
+    public void randomize()
+    {
+        for(int j = 0; j < M; j++)
+        {
+            double[] rand = new double[N];
+            double sum = 0;
+
+            for(int i = 0; i < N; i++)
+            {
+                rand[i] = Math.random();
+                sum += rand[i];
+            }
+
+            for(int i = 0; i < N; i++)
+            {
+                data[j][i] = (rand[i] / sum);
+            }
+        }
     }
 }

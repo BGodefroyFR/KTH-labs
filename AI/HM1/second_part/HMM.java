@@ -2,7 +2,7 @@ import java.util.*;
 
 public class HMM {
 
-    public static Matrix getPrediction(Model model, int time) {
+    public static Matrix getObsPrediction(Model model, int time) {
 
         Matrix res = new Matrix(model.Pi);
 
@@ -45,8 +45,65 @@ public class HMM {
 
         return res;
     }
+
+    public static State getMostLikelyLastHiddenState(Model model, Matrix M) {
+
+        Matrix Theta = new Matrix(M.getColumnNum(), model.A.getColumnNum());
+        Matrix Theta_idx = new Matrix(M.getColumnNum(), model.A.getColumnNum());
+
+        for(int i = 1; i <= model.A.getRowNum(); i++)
+        {
+            Theta.set(1, i, model.B.get(i, (int)M.get(1, 1) + 1) * model.Pi.get(1, i));
+            Theta_idx.set(1, i, i-1);
+        }
+
+        for(int t = 2; t <= M.getColumnNum(); t++)
+        {
+            for(int i = 1; i <= model.A.getColumnNum(); i++)
+            {
+                double max = 0;
+                int bestIdx = -1;
+
+                for(int j = 1; j <= model.A.getColumnNum(); j++)
+                {
+                    double tmp2 = model.A.get(j, i) * Theta.get(t-1, j) * model.B.get(i, (int)M.get(1, t) + 1);
+
+                    if(tmp2 >= max)
+                    {
+                        max = tmp2;
+                        bestIdx = j;
+                    }
+                }
+                Theta.set(t, i, max);
+                Theta_idx.set(t, i, bestIdx-1);
+            }
+        }
+
+        Matrix finalState = new Matrix(1, model.A.getColumnNum());
+        for(int i = 1; i <= Theta.getColumnNum(); i++)
+        {
+            finalState.set(1, i, Theta.get(Theta.getRowNum(), i));
+        }
+
+        Matrix finalObs = finalState.times(model.A).times(model.B);
+
+        double bestProb = 0.0;
+        int bestProbObs = 0;
+
+        for(int i = 1; i <= finalObs.getColumnNum(); i++)
+        {
+            if(finalObs.get(1, i) >= bestProb)
+            {
+                bestProb = finalObs.get(1, i);
+                bestProbObs = i - 1;
+            }
+        }
+
+        State state = new State(bestProbObs, bestProb);
+        return state;
+    }
     
-    public static List<Integer> getMostLikelySequence(Model model, Matrix M) {
+    public static List<Integer> getMostLikelyHiddenStatesSequence(Model model, Matrix M) {
 
         Matrix Theta = new Matrix(M.getColumnNum(), model.A.getColumnNum());
         Matrix Theta_idx = new Matrix(M.getColumnNum(), model.A.getColumnNum());
@@ -104,13 +161,13 @@ public class HMM {
         return res;
     }
 
-    public static Model estimateModel(Model intialModel, int[] O)
+    public static Model estimateModel(Model intialModel, int[] O, int step)
     {
         double[][] A = Util.createArray2DFromMatrix(intialModel.A);
         double[][] B = Util.createArray2DFromMatrix(intialModel.B);
         double[] Pi = Util.createArray1DFromMatrix(intialModel.Pi);
 
-        int maxIters = 100000;
+        int maxIters = 10000;
         int iters = 0;
         double logProb = -1e300;
         double oldLogProb;
@@ -120,7 +177,7 @@ public class HMM {
 
         int N = A.length;
         int M = B[0].length;
-        int T = O.length;
+        int T = step;
 
         do {
             A = Util.getArrayCopy(newA);

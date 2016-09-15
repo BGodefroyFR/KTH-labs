@@ -4,8 +4,12 @@ public class Model
 	public Matrix B;
 	public Matrix Pi;
 
-	public Model()
-	{}
+	public Model(int nbHiddenStates, int nbObs)
+	{
+		A = new Matrix(nbHiddenStates, nbHiddenStates);
+		B = new Matrix(nbHiddenStates, nbObs);
+		Pi = new Matrix(1, nbHiddenStates);
+	}
 
 	public Model(Matrix A, Matrix B, Matrix Pi)
 	{
@@ -38,5 +42,22 @@ public class Model
 		{
 			this.Pi.set(1, i+1, arr_Pi[i]);
 		}
+	}
+
+	public void randomize()
+	{
+		A.randomize();
+		B.randomize();
+		Pi.randomize();
+	}
+
+	public void show()
+	{
+		System.err.println("\nA =");
+		A.show();
+		System.err.println("\nB =");
+		B.show();
+		System.err.println("\nPi =");
+		Pi.show();
 	}
 }

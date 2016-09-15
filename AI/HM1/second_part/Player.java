@@ -1,6 +1,20 @@
+import java.util.*;
+
 class Player {
 
+	private final int nbHiddenState = 3;
+	private final int nbObs = 9;
+	private final int COMPUTE_DEADLINE = 200; // ms
+	private final int NB_STATES_START = 10;
+	//private final double MIN_SHOOT_PROBABILITY = 0.3;
+
+	private int stepCounter;
+	private int roundCounter;
+	private MyBird[] mybirds;
+
     public Player() {
+    	stepCounter = 0;
+    	roundCounter = 0;
     }
 
     /**
@@ -19,17 +33,65 @@ class Player {
      * @return the prediction of a bird we want to shoot at, or cDontShoot to pass
      */
     public Action shoot(GameState pState, Deadline pDue) {
-        /*
-         * Here you should write your clever algorithms to get the best action.
-         * This skeleton never shoots.
-         */
+        
+        // Init
+        if(pState.getRound() > roundCounter || stepCounter == 0) // new round
+        {
+        	roundCounter = pState.getRound();
+        	stepCounter = 0;
+        	mybirds = new MyBird[pState.getNumBirds()];
+        	for(int i = 0; i < mybirds.length; i++)
+        	{
+        		mybirds[i] = new MyBird(nbHiddenState, nbObs);
+        	}
+        }
 
-        // This line chooses not to shoot.
-        return cDontShoot;
+        // Collect observations
+        for(int i = 0; i < mybirds.length; i++)
+        {
+        	mybirds[i].obs[stepCounter] = pState.getBird(i).getLastObservation();
+        }
 
-        // This line would predict that bird 0 will move right and shoot at it.
-        //Action a = new Action(0, 1);
-        //return a;
+        System.err.println(roundCounter + " - " + stepCounter);
+        int mostPredictibleBirdIdx = 0;
+        if(stepCounter >= NB_STATES_START)
+        {
+        	// Estimate model
+	        for(int i = 0; i < mybirds.length; i++)
+	        {
+	        	if(pState.getBird(i).isAlive())
+		        	mybirds[i].estimateModel(stepCounter + 1);
+		    }
+
+		    // Predict next birds positions
+		    double mostPredictibleBirdProb = 0.0;
+		    for(int i = 0; i < mybirds.length; i++)
+	        {
+	        	if(pState.getBird(i).isAlive())
+	        	{
+			        mybirds[i].computeNextPosition(stepCounter, i == 1);
+			        if(mybirds[i].nextPosition.prob > mostPredictibleBirdProb)
+			        {
+			        	mostPredictibleBirdProb = mybirds[i].nextPosition.prob;
+			        	mostPredictibleBirdIdx = i;
+			        }
+			   	}
+		    }
+		}
+
+        Action a;
+        if(stepCounter >= NB_STATES_START)
+        {
+        	a = new Action(mostPredictibleBirdIdx, mybirds[mostPredictibleBirdIdx].nextPosition.index);
+        }
+        else
+        {
+        	a = cDontShoot;
+        }
+
+        stepCounter ++;
+
+        return a;
     }
 
     /**

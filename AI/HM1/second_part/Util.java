@@ -369,4 +369,26 @@ public class Util
 		}
 		return array;
 	}
+
+	public static Matrix createMatrixFromArray1D(double[] array)
+	{
+		Matrix matrix = new Matrix(1, array.length);
+
+		for(int j = 0; j < array.length; j++)
+		{
+			matrix.set(1, j+1, array[j]);
+		}
+		return matrix;
+	}
+
+	public static Matrix createMatrixFromArray1D(int[] array, int maxIndex)
+	{
+		Matrix matrix = new Matrix(1, maxIndex+1);
+
+		for(int j = 0; j < array.length && j <= maxIndex; j++)
+		{
+			matrix.set(1, j+1, array[j]);
+		}
+		return matrix;
+	}
 }
