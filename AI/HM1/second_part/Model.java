@@ -4,6 +4,13 @@ public class Model
 	public Matrix B;
 	public Matrix Pi;
 
+	public double convDist;
+
+
+	public Model()
+	{
+	}
+
 	public Model(int nbHiddenStates, int nbObs)
 	{
 		A = new Matrix(nbHiddenStates, nbHiddenStates);
@@ -18,8 +25,10 @@ public class Model
 		this.Pi = Pi;
 	}
 
-	public Model(double[][] arr_A, double[][] arr_B, double[] arr_Pi)
+	public Model(double[][] arr_A, double[][] arr_B, double[] arr_Pi, double convDist)
 	{
+		this.convDist = convDist;
+
 		A = new Matrix(arr_A.length, arr_A[0].length);
 		B = new Matrix(arr_B.length, arr_B[0].length);
 		Pi = new Matrix(1, arr_Pi.length);
@@ -59,5 +68,21 @@ public class Model
 		B.show();
 		System.err.println("\nPi =");
 		Pi.show();
+	}
+
+	public static Model getCopy(Model initialModel)
+	{
+		Model newModel = new Model(initialModel.B.getRowNum(), initialModel.B.getColumnNum());
+		newModel.A = new Matrix(initialModel.A);
+		newModel.B = new Matrix(initialModel.B);
+		newModel.Pi = new Matrix(initialModel.Pi);
+		newModel.convDist = initialModel.convDist;
+
+		return newModel;
+	}
+
+	public double compute_distance(Model other_model)
+	{
+		return Math.sqrt(Math.pow(Util.compute_HMM_distance(A, other_model.A), 2) + Math.pow(Util.compute_HMM_distance(B, other_model.B), 2));
 	}
 }

@@ -4,7 +4,7 @@ public class Test
 {
 	public static void main(String[] args)
 	{
-		Model model = new Model(3, 9);
+		/*Model model = new Model(3, 9);
 		
 		double[][] arr_A = {{0.4806426662904721, 0.34168325084492607, 0.17767408286460176},
 			{0.30118843872751594, 0.3486618839917031, 0.350149677280781}, 
@@ -24,7 +24,7 @@ public class Test
 
 
 		Model mod = HMM.estimateModel(model, arr_M, 2);
-		mod.show();
+		mod.show();*/
 
 	}
 

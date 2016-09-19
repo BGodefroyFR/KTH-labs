@@ -46,6 +46,65 @@ public class HMM {
         return res;
     }
 
+    public static State computeMostProbableNextObservation(Model model, int[] M, int step)
+    {
+        Matrix Alpha = new Matrix(step, model.A.getColumnNum());
+
+        for(int i = 1; i <= model.A.getColumnNum(); i++)
+        {
+            Alpha.set(1, i, model.Pi.get(1, i) * model.B.get(i, (int)M[0] + 1) * 1e300);
+        }
+
+        for(int t = 2; t <= step; t++)
+        {
+            for(int i = 1; i <= model.A.getColumnNum(); i++)
+            {
+                double tmp = 0;
+                for(int j = 1; j <= model.A.getColumnNum(); j++)
+                {
+                    tmp += model.A.get(j, i) * Alpha.get(t-1, j);
+                }
+
+                Alpha.set(t, i, tmp * model.B.get(i, (int)M[t-1] + 1));
+            }
+        }
+
+        double probTminus1 = 0;
+        for(int j = 1; j <= model.A.getColumnNum(); j++)
+        {
+            probTminus1 += Alpha.get(step, j);
+        }
+
+        if(probTminus1 == 0.0)
+            return new State(0, 0.0);
+
+        State nextObs = new State(0, 0.0);
+
+        for(int e = 0; e < 9; e++)
+        {
+            double probT = 0.0;
+            for(int i = 1; i <= model.A.getColumnNum(); i++)
+            {
+                double tmp = 0;
+                for(int j = 1; j <= model.A.getColumnNum(); j++)
+                {
+                    tmp += model.A.get(j, i) * Alpha.get(step, j);
+                }
+
+                probT += tmp * model.B.get(i, e + 1);
+            }
+
+            if(probT >= nextObs.prob)
+            {
+                nextObs.prob = probT;
+                nextObs.index = e;
+            }
+        }
+        nextObs.prob /= probTminus1;
+
+        return nextObs;
+    }
+
     public static State getMostLikelyLastHiddenState(Model model, Matrix M) {
 
         Matrix Theta = new Matrix(M.getColumnNum(), model.A.getColumnNum());
@@ -87,8 +146,12 @@ public class HMM {
 
         Matrix finalObs = finalState.times(model.A).times(model.B);
 
+        finalState.norm();
+        Matrix risk = finalState.times(model.A).times(model.B);
+
         double bestProb = 0.0;
         int bestProbObs = 0;
+        double resProb = 0.0;
 
         for(int i = 1; i <= finalObs.getColumnNum(); i++)
         {
@@ -96,10 +159,11 @@ public class HMM {
             {
                 bestProb = finalObs.get(1, i);
                 bestProbObs = i - 1;
+                resProb = risk.get(1, i);
             }
         }
 
-        State state = new State(bestProbObs, bestProb);
+        State state = new State(bestProbObs, resProb);
         return state;
     }
     
@@ -161,13 +225,13 @@ public class HMM {
         return res;
     }
 
-    public static Model estimateModel(Model intialModel, int[] O, int step)
+    public static Model estimateModel(Model intialModel, List<Integer> O, int step)
     {
         double[][] A = Util.createArray2DFromMatrix(intialModel.A);
         double[][] B = Util.createArray2DFromMatrix(intialModel.B);
         double[] Pi = Util.createArray1DFromMatrix(intialModel.Pi);
 
-        int maxIters = 10000;
+        int maxIters = 120;
         int iters = 0;
         double logProb = -1e300;
         double oldLogProb;
@@ -195,7 +259,7 @@ public class HMM {
             c[0] = 0;
             for(int i = 0; i <= N - 1; i++)
             {
-                Alpha[0][i] = Pi[i] * B[i][(int)O[0]];
+                Alpha[0][i] = Pi[i] * B[i][(int)O.get(0)];
                 c[0] = c[0] + Alpha[0][i];
             }
 
@@ -204,6 +268,9 @@ public class HMM {
             for(int i = 0; i <= N - 1; i++)
                 Alpha[0][i] = c[0] * Alpha[0][i];
 
+            //System.err.println("Pi show:");
+            //Util.output_array1D(Pi);
+            
             // compute Alpha_t(i)
             for(int t = 1; t <= T - 1; t++)
             {
@@ -215,12 +282,15 @@ public class HMM {
                     {
                         Alpha[t][i] = Alpha[t][i] + Alpha[t-1][j] * A[j][i];
                     }
-                    Alpha[t][i] = Alpha[t][i] * B[i][(int)O[t]];
+                    Alpha[t][i] = Alpha[t][i] * B[i][(int)O.get(t)];
                     c[t] = c[t] + Alpha[t][i];
                 }
 
+                //System.err.println("Alpha show:");
+                //Util.output_array(Alpha);
+
                 // scale Alpha_t(i)
-                c[t] = 1.0 / c[t];
+                c[t] = 1.0 / (c[t] == 0.0 ? 1.0 : c[t]);
                 for(int i = 0; i <= N-1; i++)
                     Alpha[t][i] = c[t] * Alpha[t][i];
             }
@@ -235,7 +305,7 @@ public class HMM {
                 {
                     Beta[t][i] = 0;
                     for(int j = 0; j <= N-1; j++)
-                        Beta[t][i] = Beta[t][i] + A[i][j] * B[j][(int)O[t+1]] * Beta[t+1][j];
+                        Beta[t][i] = Beta[t][i] + A[i][j] * B[j][(int)O.get(t+1)] * Beta[t+1][j];
                 
                     // scale
                     Beta[t][i] = c[t] * Beta[t][i];
@@ -250,15 +320,16 @@ public class HMM {
                 {
                     for(int j = 0; j <= N-1; j++)
                     {
-                        denom = denom + Alpha[t][i] * A[i][j] * B[j][(int)O[t+1]] * Beta[t+1][j];
+                        denom = denom + Alpha[t][i] * A[i][j] * B[j][(int)O.get(t+1)] * Beta[t+1][j];
                     }
                 }
+                
                 for(int i = 0; i <= N-1; i++)
                 {
                     Gamma[t][i] = 0;
                     for(int j = 0; j <= N-1; j++)
                     {
-                        DiGamma[t][i][j] = (Alpha[t][i] * A[i][j] * B[j][(int)O[t+1]] * Beta[t+1][j]) / denom;
+                        DiGamma[t][i][j] = (Alpha[t][i] * A[i][j] * B[j][(int)O.get(t+1)] * Beta[t+1][j]) / denom;
                         Gamma[t][i] = Gamma[t][i] + DiGamma[t][i][j];
                     }
                 }
@@ -299,7 +370,7 @@ public class HMM {
 
                     for(int t = 0; t <= T-1; t++)
                     {
-                        if(O[t] == j)
+                        if(O.get(t) == j)
                             numer = numer + Gamma[t][i];
                         denom = denom + Gamma[t][i];
                     }
@@ -317,7 +388,7 @@ public class HMM {
 
         } while(iters < maxIters && logProb > oldLogProb);
 
-        Model estimateModel = new Model(A, B, Pi);
+        Model estimateModel = new Model(A, B, Pi, Math.abs(logProb - oldLogProb));
         return estimateModel;
     }
 }

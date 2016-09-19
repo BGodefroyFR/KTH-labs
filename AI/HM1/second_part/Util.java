@@ -235,6 +235,23 @@ public class Util
 		return (-1) * logProb;
 	}
 
+	public static double compute_HMM_distance(Matrix M1, Matrix M2)
+	{
+		double dist = 0;
+
+		for (int i = 1; i <= M1.getRowNum(); i++)
+		{
+			double tmp = 0;
+			for (int j = 1; j <= M1.getColumnNum(); j++)
+			{
+				tmp += Math.pow(M1.get(i, j) - M2.get(i, j), 2);
+			}
+			dist += tmp;
+		}
+
+		return Math.sqrt(dist);
+	}
+
 	public static double compute_HMM_distance2D(double[][] M1, double[][] M2)
 	{
 		double dist = 0;
@@ -307,27 +324,41 @@ public class Util
 
 	public static void output_array(double[][] array)
 	{
-		System.out.print(array.length + " " + array[0].length + " ");
+		System.err.print(array.length + " " + array[0].length + " ");
 
 		for (int i = 0; i < array.length; i++)
 		{
 			for (int j = 0; j < array[0].length; j++)
 			{
-				System.out.print(array[i][j] + " ");
+				System.err.print(array[i][j] + " ");
 			}
 		}
-		System.out.println();
+		System.err.println();
+	}
+
+	public static void output_array(int[][] array)
+	{
+		System.err.print(array.length + " " + array[0].length + " ");
+
+		for (int i = 0; i < array.length; i++)
+		{
+			for (int j = 0; j < array[0].length; j++)
+			{
+				System.err.print(array[i][j] + " ");
+			}
+		}
+		System.err.println();
 	}
 
 	public static void output_array1D(double[] array)
 	{
-		System.out.print(1 + " " + array.length + " ");
+		System.err.print(1 + " " + array.length + " ");
 
 		for (int j = 0; j < array.length; j++)
 		{
-			System.out.print(array[j] + " ");
+			System.err.print(array[j] + " ");
 		}
-		System.out.println();
+		System.err.println();
 	}
 
 	public static double[][] getArrayCopy(double[][] array)
@@ -390,5 +421,44 @@ public class Util
 			matrix.set(1, j+1, array[j]);
 		}
 		return matrix;
+	}
+
+	public static Matrix createObsMatrix(int[] array, int maxObs)
+	{
+		int nbStep = maxObs;
+		for(int j = 0; j < array.length && j < maxObs; j++)
+		{
+			if(array[j] < 0)
+			{
+				nbStep = j;
+				break;
+			}
+		}
+
+		Matrix matrix = new Matrix(1, nbStep);
+
+		for(int j = 0; j < nbStep; j++)
+		{
+			matrix.set(1, j+1, array[j]);
+		}
+
+		return matrix;
+	}
+
+	public static int KparmiN(int k, int n)
+	{
+		double f1 = factorielle(n);
+		double f2 = factorielle(k);
+		double f3 = factorielle(n-k);
+
+		return (int)(f1 / f2 / f3);
+	}
+
+	private static double factorielle(int nb)
+	{
+		double res = 1;
+		for(int i = 2; i <= nb; i++)
+			res *= (double)i;
+		return res;
 	}
 }

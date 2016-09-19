@@ -4,34 +4,40 @@ class Player {
 
 	private final int nbHiddenState = 3;
 	private final int nbObs = 9;
-	private final int COMPUTE_DEADLINE = 200; // ms
-	private final int NB_STATES_START = 10;
-	//private final double MIN_SHOOT_PROBABILITY = 0.3;
+	
+    private final int START_SHOOTING_ROUND = 1;
+    private final int START_SHOOTING_STEP = 80;
+
+	private final int COMPUTE_DEADLINE = 1900; // ms
+	private final int START_MODEL = 80;
+	private final int START_SHOOTING = 92;
+	private final double MIN_PROB_SHOOTING = 0.75;
+
+	private final double PROTECTED_BIRD_PROB = 0.03;
+    public static final double PROTECTED_SHOOT_MALUS = 40;
+
+	private final double MAX_PROT_BIRD_PROB_SHOOT = 0.05;
 
 	private int stepCounter;
 	private int roundCounter;
-	private MyBird[] mybirds;
+	private MyBird[] currentBirds;
+	private Species[] species;
+    private List<MyBird> previousBirds;
+
+	private int nbPreviousBirds;
 
     public Player() {
+
     	stepCounter = 0;
     	roundCounter = 0;
+    	nbPreviousBirds = 0;
+        previousBirds = new ArrayList<MyBird>();
+
+    	species = new Species[6];
+    	for(int i = 0; i < 6; i++)
+    		species[i] = new Species();
     }
 
-    /**
-     * Shoot!
-     *
-     * This is the function where you start your work.
-     *
-     * You will receive a variable pState, which contains information about all
-     * birds, both dead and alive. Each bird contains all past moves.
-     *
-     * The state also contains the scores for all players and the number of
-     * time steps elapsed since the last time this function was called.
-     *
-     * @param pState the GameState object with observations etc
-     * @param pDue time before which we must have returned
-     * @return the prediction of a bird we want to shoot at, or cDontShoot to pass
-     */
     public Action shoot(GameState pState, Deadline pDue) {
         
         // Init
@@ -39,106 +45,105 @@ class Player {
         {
         	roundCounter = pState.getRound();
         	stepCounter = 0;
-        	mybirds = new MyBird[pState.getNumBirds()];
-        	for(int i = 0; i < mybirds.length; i++)
+
+        	currentBirds = new MyBird[pState.getNumBirds()];
+        	for(int i = 0; i < currentBirds.length; i++)
         	{
-        		mybirds[i] = new MyBird(nbHiddenState, nbObs);
+        		currentBirds[i] = new MyBird(nbHiddenState, nbObs);
         	}
         }
 
         // Collect observations
-        for(int i = 0; i < mybirds.length; i++)
+        for(int i = 0; i < currentBirds.length; i++)
         {
-        	mybirds[i].obs[stepCounter] = pState.getBird(i).getLastObservation();
+        	currentBirds[i].addObservation(stepCounter, pState.getBird(i).getLastObservation());
         }
 
-        System.err.println(roundCounter + " - " + stepCounter);
-        int mostPredictibleBirdIdx = 0;
-        if(stepCounter >= NB_STATES_START)
-        {
-        	// Estimate model
-	        for(int i = 0; i < mybirds.length; i++)
-	        {
-	        	if(pState.getBird(i).isAlive())
-		        	mybirds[i].estimateModel(stepCounter + 1);
-		    }
+        double bestEsperance = -1e300;
+        int bestBird = 0;
+        int nextShoot = 0;
+        Action a = cDontShoot;
 
-		    // Predict next birds positions
-		    double mostPredictibleBirdProb = 0.0;
-		    for(int i = 0; i < mybirds.length; i++)
-	        {
-	        	if(pState.getBird(i).isAlive())
-	        	{
-			        mybirds[i].computeNextPosition(stepCounter, i == 1);
-			        if(mybirds[i].nextPosition.prob > mostPredictibleBirdProb)
-			        {
-			        	mostPredictibleBirdProb = mybirds[i].nextPosition.prob;
-			        	mostPredictibleBirdIdx = i;
-			        }
-			   	}
-		    }
-		}
-
-        Action a;
-        if(stepCounter >= NB_STATES_START)
+        if(roundCounter >= START_SHOOTING_ROUND && stepCounter >= START_SHOOTING_STEP)
         {
-        	a = new Action(mostPredictibleBirdIdx, mybirds[mostPredictibleBirdIdx].nextPosition.index);
+            for(int i = 0; i < currentBirds.length; i++)
+            {
+                if(pState.getBird(i).isAlive())
+                {
+                    MyBird.guessSpecies(currentBirds[i], species, previousBirds, false);
+                    currentBirds[i].computeNextObservation(species);
+                    currentBirds[i].computeShootGainEsperance(species);
+                    //System.err.println(currentBirds[i].shootGainEsperance);
+                    if(currentBirds[i].shootGainEsperance > 0.0 && currentBirds[i].shootGainEsperance > bestEsperance)
+                    {
+                        bestEsperance = currentBirds[i].shootGainEsperance;
+                        nextShoot = currentBirds[i].nextPosition.index;
+                        bestBird = i;
+                    }
+                }
+            }
+            //System.err.println("Shoot: " + bestBird + " - " + nextShoot + " - " + bestEsperance);
+            if(bestEsperance > 0.0)
+            {
+                //System.err.println("Shoot: " + bestBird + " - " + nextShoot + " - " + bestEsperance);
+                a = new Action(bestBird, nextShoot);
+            }
         }
-        else
+
+        if(roundCounter > 0 && stepCounter < 6)
         {
-        	a = cDontShoot;
+            if(! species[stepCounter].isEmpty)
+                species[stepCounter].updateModel(roundCounter);
         }
 
         stepCounter ++;
-
         return a;
     }
 
-    /**
-     * Guess the species!
-     * This function will be called at the end of each round, to give you
-     * a chance to identify the species of the birds for extra points.
-     *
-     * Fill the vector with guesses for the all birds.
-     * Use SPECIES_UNKNOWN to avoid guessing.
-     *
-     * @param pState the GameState object with observations etc
-     * @param pDue time before which we must have returned
-     * @return a vector with guesses for all the birds
-     */
     public int[] guess(GameState pState, Deadline pDue) {
-        /*
-         * Here you should write your clever algorithms to guess the species of
-         * each bird. This skeleton makes no guesses, better safe than sorry!
-         */
 
         int[] lGuess = new int[pState.getNumBirds()];
-        for (int i = 0; i < pState.getNumBirds(); ++i)
-            lGuess[i] = Constants.SPECIES_UNKNOWN;
+
+        for(int i = 0; i < currentBirds.length; i++)
+    	{
+    		MyBird.guessSpecies(currentBirds[i], species, previousBirds, true);
+        	lGuess[i] = currentBirds[i].guessedSpecies;
+        }
+
+        //for (int i = 0; i < pState.getNumBirds(); ++i)
+        //	lGuess[i] = Constants.SPECIES_UNKNOWN;
         return lGuess;
     }
 
-    /**
-     * If you hit the bird you were trying to shoot, you will be notified
-     * through this function.
-     *
-     * @param pState the GameState object with observations etc
-     * @param pBird the bird you hit
-     * @param pDue time before which we must have returned
-     */
     public void hit(GameState pState, int pBird, Deadline pDue) {
         System.err.println("HIT BIRD!!!");
     }
 
-    /**
-     * If you made any guesses, you will find out the true species of those
-     * birds through this function.
-     *
-     * @param pState the GameState object with observations etc
-     * @param pSpecies the vector with species
-     * @param pDue time before which we must have returned
-     */
     public void reveal(GameState pState, int[] pSpecies, Deadline pDue) {
+
+    	for(int i = 0; i < currentBirds.length; i++)
+    	{
+    		currentBirds[i].guessedSpecies = pSpecies[i];
+    		//System.err.println("reveal: " + pSpecies[i]);
+    	}
+
+        for(int i = 0; i < currentBirds.length; i++)
+        {
+            previousBirds.add(currentBirds[i]);
+            species[currentBirds[i].guessedSpecies].addBird(currentBirds[i]);
+            nbPreviousBirds ++;
+        }
+        for(int i = 0; i < species.length; i++)
+            species[i].computeMoveMatrix();
+
+    	//computeSpeciesProtectedProb();
+    }
+
+    private void computeSpeciesProtectedProb()
+    {
+    	for(int i = 0; i < 6; i++)
+			species[i].protectedProb = Util.KparmiN(species[i].nbBirds, nbPreviousBirds)
+    			* Math.pow(PROTECTED_BIRD_PROB, species[i].nbBirds) * Math.pow(1.0 - PROTECTED_BIRD_PROB, nbPreviousBirds - species[i].nbBirds);
     }
 
     public static final Action cDontShoot = new Action(-1, -1);

@@ -11,7 +11,6 @@ public class State
 
 	public void show()
 	{
-		System.out.println(index);
-		System.out.println(prob);
+		System.err.println("State: " + index + " - " + prob);
 	}
 }

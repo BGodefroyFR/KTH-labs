@@ -231,6 +231,26 @@ final public class Matrix {
         return N;
     }
 
+    public void norm()
+    {
+        double sum = 0.0;
+
+        for(int i = 1; i <= M; i++)
+        {
+            for(int j = 1; j <= N; j++)
+            {
+                sum += data[i-1][j-1];
+            }
+        }
+        for(int i = 1; i <= M; i++)
+        {
+            for(int j = 1; j <= N; j++)
+            {
+                data[i-1][j-1] *= (1.0 / sum);
+            }
+        }
+    }
+
     public double getBestObservation(int t)
     {
         double max = 0;

@@ -142,8 +142,8 @@ class Client {
             // Tell the player
             Deadline lDue = new Deadline(lMs);
             mPlayer.reveal(mState, lRevealedSpecies, lDue);
-            if (lDue.remainingMs() < 0)
-                throw new Exception("Player timed out during REVEAL");
+            //if (lDue.remainingMs() < 0)
+            //    throw new Exception("Player timed out during REVEAL");
         } else if (lMessageType.equals("TIMEOUT")) {
             throw new Exception("Received TIMEOUT from server");
         } else if (lMessageType.equals("GAMEOVER")) {
