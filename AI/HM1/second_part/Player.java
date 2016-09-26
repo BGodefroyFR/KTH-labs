@@ -25,6 +25,7 @@ class Player {
     private List<MyBird> previousBirds;
 
 	private int nbPreviousBirds;
+    private int modelPointer;
 
     public Player() {
 
@@ -51,6 +52,11 @@ class Player {
         	{
         		currentBirds[i] = new MyBird(nbHiddenState, nbObs);
         	}
+            for(int i = 0; i < 6; i++)
+            {
+                species[i].resetModel();
+            }
+            modelPointer = 0;
         }
 
         // Collect observations
@@ -90,10 +96,17 @@ class Player {
             }
         }
 
-        if(roundCounter > 0 && stepCounter < 6)
+        for(int i = 0; i < 6; i++)
         {
-            if(! species[stepCounter].isEmpty)
-                species[stepCounter].updateModel(roundCounter);
+            if(! species[modelPointer].isEmpty && ! species[modelPointer].isModelChoiceFinished)
+            {
+                species[modelPointer].updateModel(roundCounter);
+                break;
+            }
+
+            modelPointer ++;
+            if(modelPointer >= 6)
+                modelPointer = 0;
         }
 
         stepCounter ++;
@@ -107,7 +120,15 @@ class Player {
         for(int i = 0; i < currentBirds.length; i++)
     	{
     		MyBird.guessSpecies(currentBirds[i], species, previousBirds, true);
-        	lGuess[i] = currentBirds[i].guessedSpecies;
+
+            if(roundCounter >= 25 && currentBirds[i].guessedSpecies < 0.5)
+            {
+                lGuess[i] = Constants.SPECIES_UNKNOWN;
+            }
+            else
+            {
+        	   lGuess[i] = currentBirds[i].guessedSpecies;
+            }
         }
 
         //for (int i = 0; i < pState.getNumBirds(); ++i)
@@ -129,8 +150,11 @@ class Player {
 
         for(int i = 0; i < currentBirds.length; i++)
         {
-            previousBirds.add(currentBirds[i]);
-            species[currentBirds[i].guessedSpecies].addBird(currentBirds[i]);
+            if(currentBirds[i].guessedSpecies != -1)
+            {
+                previousBirds.add(currentBirds[i]);
+                species[currentBirds[i].guessedSpecies].addBird(currentBirds[i]);
+            }
             nbPreviousBirds ++;
         }
         for(int i = 0; i < species.length; i++)

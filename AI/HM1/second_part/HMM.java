@@ -231,7 +231,7 @@ public class HMM {
         double[][] B = Util.createArray2DFromMatrix(intialModel.B);
         double[] Pi = Util.createArray1DFromMatrix(intialModel.Pi);
 
-        int maxIters = 120;
+        int maxIters = 160;
         int iters = 0;
         double logProb = -1e300;
         double oldLogProb;
